@@ -196,7 +196,7 @@ class VDIP:
     # get red band from the local directory
     def pb_red_band_clicked(self):
         global r_dataset,r_array,r_cols,r_rows,r_geoTransform,r_projection
-        red_band_filename=QFileDialog.getOpenFileName(self.dlg,'Open corrected Red band','', '*.tif')
+        red_band_filename=QFileDialog.getOpenFileName(self.dlg,'Open corrected Red band','', '*.tif','*.tiff','*TIF','*TIFF')
         red_band_path=red_band_filename[0]    
         r_dataset=gdal.Open(red_band_path)   
         red_band=r_dataset.GetRasterBand(1)
@@ -215,7 +215,7 @@ class VDIP:
     # get nir band from the local directory
     def pb_nir_band_clicked(self):
         global n_dataset,n_array,n_cols,n_rows,n_geoTransform,n_projection
-        nir_band_filename=QFileDialog.getOpenFileName(self.dlg,'Open corrected NIR band','', '*.tif')
+        nir_band_filename=QFileDialog.getOpenFileName(self.dlg,'Open corrected NIR band','', '*.tif','*.tiff','*TIF','*TIFF')
         nir_band_path=nir_band_filename[0]
         n_dataset=gdal.Open(nir_band_path)
         nir_band=n_dataset.GetRasterBand(1)
