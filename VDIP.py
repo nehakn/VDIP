@@ -550,7 +550,7 @@ class VDIP:
         # if no parameter is checked then no computation is required
         else:
             logger=self.dlg.tb_display
-            logger.append('\nNo parameter is chosen for computation')
+            logger.append('\nGo again')
 
     # to make sure that all the check boxes are unchecked on closing the plugin 
     # added on 15/05/2022
