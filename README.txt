@@ -1,1 +1,0 @@
-It computes site-specific soil line using NIR-Red band spectral space. Further, it estimates vegetation and drought indices that can be used to analyze agricultural land, soil conditions, crop health, etc.
