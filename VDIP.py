@@ -32,7 +32,7 @@ from qgis.PyQt import QtWidgets
 
 from PyQt5 import QtCore,QtGui,QtWidgets
 from PyQt5.QtWidgets import *
-import gdal
+from osgeo import gdal
 import numpy as np
 import time,datetime
 
@@ -259,6 +259,28 @@ class VDIP:
             l1='\nChosen directory to store the clipped red and nir bands:'+r_n_raster_output
             logger.append(l1)
 
+            # creating a folder to save the files
+            file_dir=r_n_raster_output
+            browse=file_dir+'/'
+            print(browse)
+            folder_01='IITD_VDIP_%s' % (time.strftime("%d%m%Y_") + time.strftime("%H%M%S"))
+            if not os.path.exists(os.path.join(browse, folder_01)):
+                os.makedirs(os.path.join(browse, folder_01))
+                # print("%s is created in directory: %s" % (folder_01, browse))
+            else:
+                folder_create=False
+                while not folder_create:
+                    folder_01='IITD_VDIP%s' % (time.strftime("%d%m%Y_") + time.strftime("%H%M%S"))
+                    if not os.path.exists(os.path.join(browse, folder_01)):
+                        os.makedirs(os.path.join(browse, folder_01))
+                        # print("%s is created in directory: %s" % (folder_01, browse))
+                        folder_create=True
+
+                del folder_create
+            file_dir=browse+folder_01+'/'
+            r_n_raster_output=file_dir
+            print(r_n_raster_output)
+
             # save the clipped red band image
             r_raster_input=r_dataset
             r_raster_output=r_n_raster_output+'/red_clipped_%s' % (time.strftime("%d%m%Y_") + time.strftime("%H%M%S"))+'.tif'
@@ -304,6 +326,28 @@ class VDIP:
             logger=self.dlg.tb_display
             l1='\nDirectory selected to store the outputs:'+r_n_raster_output
             logger.append(l1)
+
+            # creating a folder to save the files
+            file_dir=r_n_raster_output
+            browse=file_dir+'/'
+            print(browse)
+            folder_01='IITD_VDIP_%s' % (time.strftime("%d%m%Y_") + time.strftime("%H%M%S"))
+            if not os.path.exists(os.path.join(browse, folder_01)):
+                os.makedirs(os.path.join(browse, folder_01))
+                # print("%s is created in directory: %s" % (folder_01, browse))
+            else:
+                folder_create=False
+                while not folder_create:
+                    folder_01='IITD_VDIP%s' % (time.strftime("%d%m%Y_") + time.strftime("%H%M%S"))
+                    if not os.path.exists(os.path.join(browse, folder_01)):
+                        os.makedirs(os.path.join(browse, folder_01))
+                        # print("%s is created in directory: %s" % (folder_01, browse))
+                        folder_create=True
+
+                del folder_create
+            file_dir=browse+folder_01+'/'
+            r_n_raster_output=file_dir
+            print(r_n_raster_output)
             
             red_band=r_dataset.GetRasterBand(1)
             r_rows=r_dataset.RasterXSize

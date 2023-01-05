@@ -7,7 +7,7 @@ name=VDIP
 qgisMinimumVersion=3.0
 description=It computes site-specific soil line using NIR-Red band spectral space. Further, it estimates vegetation and drought indices.
 
-version=0.1
+version=1.1
 author=Neha K Nawandar
 email=nehanawandar@gmail.com
 
@@ -26,7 +26,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python, soil line, drought index, vegetation index
 
-homepage=https://github.com/nehakn/VDIP/blob/main/README.txt
+homepage=https://github.com/nehakn/VDIP/blob/main/README.md
 category=Plugins
 icon=icon.png
 # experimental flag
