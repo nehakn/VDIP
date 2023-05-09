@@ -35,6 +35,7 @@ from PyQt5.QtWidgets import *
 from osgeo import gdal
 import numpy as np
 import time,datetime
+from scipy.spatial import ConvexHull
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -357,7 +358,7 @@ class VDIP:
             r_band=r_dataset.GetRasterBand(1)
             r_array=r_dataset.ReadAsArray()
             logger=self.dlg.tb_display
-            logger.append('\nRed band  converted in array form')
+            logger.append('\nRed band converted in array form')
 
             nir_band=n_dataset.GetRasterBand(1)
             n_cols=n_dataset.RasterXSize
@@ -403,11 +404,89 @@ class VDIP:
             # global slope
             slope1=(rho_nir_max-rho_nir_min)/(rho_red_max-rho_red_min)
             intercept1=-slope1*rho_red_min+rho_nir_min
-            slope=slope1[0]
-            intercept=intercept1[0]
+            # slope=slope1[0]
+            # intercept=intercept1[0]
+            # logger=self.dlg.tb_display
+            # l1='\nSoil line slope is '+str(slope)+' and, intercept is '+str(intercept)
+            # logger.append(l1)
+
+
+            # soil line using boundary points (started to add on 08/05/2023)
+            red=r_array
+            nir=n_array
+            # remove any nan entry from the data
+            red[np.isnan(red)]=0
+            nir[np.isnan(nir)]=0
+            # 2d to 1d array
+            red1d=red.flatten()
+            nir1d=nir.flatten()
+            m=len(red1d)
+            # combine nir and red into a single array comb
+            comb=np.zeros((m,2),dtype='float64')
+            for i in range(m):
+                comb[i][0]=red1d[i,]
+                comb[i][1]=nir1d[i,]
+            # remove 0 values from comb
+            comb=comb[~np.any(comb==0,axis=1)]
+
+            # getting the boundary in temp1
+            temp1=ConvexHull(comb)
+            # get the vertices of the boundary
+            bounds=[]
+            bounds.append(comb[temp1.vertices,:])
+            l=len(bounds[0][:])
+            bound_vals=bounds
+            x1,x2,y1,y2=[],[],[],[]
+            slopes=[]
+            intercept=[]
+            # get x and y coordinates in xi and yi
+            for i in range(l-1):
+                x1.append(bound_vals[0][i,0])
+                x2.append(bound_vals[0][i+1,0])
+                y1.append(bound_vals[0][i,1])
+                y2.append(bound_vals[0][i+1,1])
+            # slope and intercept computation using xi and yi
+            for i in range(l-1):
+                slopes.append(np.where(x2[i]-x1[i]==0,0,(y2[i]-y1[i])/(x2[i]-x1[i])))
+                intercept.append(-slopes[i]*x1[i]+y1[i])
+            print('Slopes: ', slopes, '\n\n Intercepts: ', intercept)
+            
+            # distance of all pixels from these lines
+            m=len(red1d)
+            l1=len(intercept)
+            dist=np.zeros((l1,1))
+            for j in range(l1-1):
+                for i in range(m-1):
+                    dist[j,0]=(nir1d[i]-slopes[j]*red1d[i]-intercept[j])/np.sqrt(1+slopes[j]*slopes[j]+dist[j,0])
+            print('Distance vector: ', dist)
+            # distance and slope in one variable
+            dist_slope=np.zeros((l1,2),dtype='float64')
+            for i in range(l1-1):
+                dist_slope[i][0]=dist[i,0]
+                dist_slope[i][1]=slopes[i]
+            # remove unrequired values
+            dist_slope[dist_slope==0]=np.inf
+            dist_slope=(dist_slope[~np.isnan(dist_slope).any(axis=1)])
+            dist_slope[dist_slope[0:,1]<0]=np.inf
+            dist_slope[dist_slope[0:,0]<0]=np.inf
+            dist_slope[dist_slope[0:,1]>2]=np.inf
+            dist_slope[dist_slope[0:,1]<1]=np.inf
+            dist1=dist_slope[:,0]
+            slope1=dist_slope[:,1]
+            # minimum distance points
+            min_distance_pos=np.argmin(dist1)        
+            min_dist=dist1[min_distance_pos]
+            # find the best soil line
+            best_line_points1=[bound_vals[0][min_distance_pos,0],bound_vals[0][min_distance_pos,1]]
+            best_line_points2=[bound_vals[0][min_distance_pos+1,0],bound_vals[0][min_distance_pos+1,1]]
+            # slope and intercept using these points
+            slope=(best_line_points2[1]-best_line_points1[1])/(best_line_points2[0]-best_line_points1[0])
+            intercept=slope*best_line_points1[0]+best_line_points1[1]
+            # display the best points in the description window
             logger=self.dlg.tb_display
-            l1='\nSoil line slope is '+str(slope)+' and, intercept is '+str(intercept)
-            logger.append(l1)
+            l1='Soil line (boundary) slope: '+str(slope)+' and, intercept: '+str(intercept)
+
+
         else:
             slope=1.0573
             intercept=0.0268
@@ -516,7 +595,7 @@ class VDIP:
 
         # check the dvi parameter
         if self.dlg.cb_dvi.isChecked():
-            dvi=slope*n_array+n_array
+            dvi=n_array+r_array
             logger=self.dlg.tb_display
             driver=gdal.GetDriverByName("GTiff")
             if self.dlg.cb_clip_bands.isChecked():
@@ -652,7 +731,8 @@ class VDIP:
         logger = self.dlg.tb_display
         logger.append(
             'VDIP: Vegetation and Drought Indices Parameter computation Plugin\n'
-            '\nThis plugin computes the mentioned parameters, based on the selections made by the user. Follow the below given steps to use the plugin:'
+            '\nThis plugin computes the mentioned parameters, based on the selections made by the user. A new technique to find the soil line has been introduced in this version.' 
+            '\nFollow the below given steps to use the plugin:'
             '\n-Select the corrected Red and NIR bands.'
             '\n-If bands need to be clipped, select the proper shape file.'
             '\n-If local soil line needs to be extracted, select the check box; else default values will be considered'
